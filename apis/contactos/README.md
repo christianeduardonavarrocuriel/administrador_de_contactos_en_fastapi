@@ -1,5 +1,3 @@
-# apis_demo
-
 |  Contactos    |              | 
 |:-------------:|:------------:|
 | id_contacto   | int PK       |
@@ -34,7 +32,7 @@
 |3|Version|V1|
 |4|Method|GET|
 |5|Endpoint|/v1/contactos/{id_contacto}|
-|6|Query Param|NA|
+|6|Query Param|limit:int&skip:int|
 |7|Path Param|id_contacto|
 |8|Data|NA|
 |9|Status Code|202|
