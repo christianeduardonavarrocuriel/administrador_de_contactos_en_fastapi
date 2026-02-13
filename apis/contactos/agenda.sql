@@ -1,0 +1,6 @@
+CREATE TABLE contactos (
+    id_contacto INTEGER PRIMARY KEY AUTOINCREMENT,
+    nombre VARCHAR(255) NOT NULL,
+    telefono VARCHAR(20) NOT NULL UNIQUE,
+    email VARCHAR(255) NOT NULL
+);

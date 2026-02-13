@@ -43,3 +43,25 @@
 |13|Response Type (error)|applicaction/json|
 |14|Response (error)|{"error": "Error al Buscar el Registro"}|
 |15|cURL|curl -X GET http://localhost:8000/v1/contactos/3|
+
+
+SQLite version 3.45.3 2024-04-15 13:34:05
+Enter ".help" for usage hints.
+sqlite> .mode csv
+sqlite> .show
+        echo: off
+         eqp: off
+     explain: auto
+     headers: off
+        mode: csv
+   nullvalue: ""
+      output: stdout
+colseparator: ","
+rowseparator: "\r\n"
+       stats: off
+       width: 
+    filename: agenda.db
+sqlite> .import data.csv contactos
+sqlite> SELECT * FROM contactos;
+
+- ""?"" Sirve para prevenir la inyección de código en SQL
