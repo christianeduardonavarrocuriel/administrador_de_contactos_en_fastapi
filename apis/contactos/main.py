@@ -38,34 +38,91 @@ async def get_contactos(limit: int = 10, skip: int = 0):
   #  TODO: Formatear la respuesta con el siguiente schema:
   #  TODO: Responder la petición
 
+    # Validación de parámetros: limit y skip no pueden ser negativos
+    if limit < 0 and skip < 0:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": "12/02/2026 10:28:30",
+                "message": "Error: los parámetros limit y skip no pueden ser negativos",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
+    if limit < 0:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": "12/02/2026 10:28:30",
+                "message": "Error: el parámetro limit no puede ser negativo",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
+    if skip < 0:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": "12/02/2026 10:28:30",
+                "message": "Error: el parámetro skip no puede ser negativo",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
     try:
         db = sqlite.connect("agenda.db")
         cursor = db.cursor()
+
+        # Validar que el rango de limit no exceda el total de registros
+        cursor.execute("SELECT COUNT(*) FROM contactos")
+        total_registros = cursor.fetchone()[0]
+
+        if limit > total_registros and total_registros > 0:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "table": "contactos",
+                    "items": [],
+                    "count": 0,
+                    "datetime": "12/02/2026 10:28:30",
+                    "message": "Error: el parámetro limit excede el número de registros disponibles",
+                    "limit": limit,
+                    "skip": skip,
+                },
+            )
+
         cursor.execute("SELECT * FROM contactos LIMIT ? OFFSET ?", (limit, skip))
         contactos = cursor.fetchall()
-        print(contactos)
+        items = [
+            {
+                "id_contacto": row[0],
+                "nombre": row[1],
+                "telefono": row[2],
+                "email": row[3],
+            }
+            for row in contactos
+        ]
 
         data = {
             "table": "contactos",
-            "items": [
-                {
-                    "id_contacto":1,
-                    "nombre":"Dejah",
-                    "telefono":"1234567890",
-                    "email":"dejah@email.com"
-                },
-                {
-                    "id_contacto":2,
-                    "nombre":"John Carter",
-                    "telefono":"0987654321",
-                    "email":"john@email.com"    
-                },
-            ],
-            "count": 2,
+            "items": items,
+            "count": len(items),
             "datetime": "12/02/2026 10:28:30",
             "message": "Datos consultados exitosamente",
-            "limit":limit,
-            "skip":skip
+            "limit": limit,
+            "skip": skip,
         }
         return JSONResponse(
             status_code=202,
@@ -86,6 +143,81 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                 "skip":skip
                 }
             )
+
+
+@app.get(
+    "/v1/contactos/{id_contacto}",
+    status_code=202,
+    summary="Consultar un contacto por ID",
+    description="Busca un contacto específico en la tabla contactos usando id_contacto",
+)
+async def get_contacto_por_id(id_contacto: int):
+    # Validación: id_contacto no puede ser negativo
+    if id_contacto < 0:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "item": {},
+                "count": 0,
+                "datetime": "12/02/2026 10:28:30",
+                "message": "Error: No puedes ingresas un número negativo en id_contacto",
+            },
+        )
+
+    try:
+        db = sqlite.connect("agenda.db")
+        cursor = db.cursor()
+        cursor.execute(
+            "SELECT id_contacto, nombre, telefono, email FROM contactos WHERE id_contacto = ?",
+            (id_contacto,),
+        )
+        row = cursor.fetchone()
+
+        if row is None:
+            # Contacto no encontrado
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "table": "contactos",
+                    "item": {},
+                    "count": 0,
+                    "datetime": "12/02/2026 10:28:30",
+                    "message": "Contacto no encontrado",
+                },
+            )
+
+        item = {
+            "id_contacto": row[0],
+            "nombre": row[1],
+            "telefono": row[2],
+            "email": row[3],
+        }
+
+        data = {
+            "table": "contactos",
+            "items": item,
+            "datetime": "12/02/2026 10:28:30",
+            "message": "Datos consultados exitosamente",
+        }
+        return JSONResponse(status_code=202, content=data)
+    except Exception as e:
+        print(f"Error al consultar el contacto por id: {e.args}")
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "item": {},
+                "count": 0,
+                "datetime": "12/02/2026 10:28:30",
+                "message": "Error al Buscar el Registro",
+            },
+        )
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
 
 
 @app.post(

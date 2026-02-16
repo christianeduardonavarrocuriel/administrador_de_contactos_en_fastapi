@@ -45,3 +45,25 @@
 |13|Response Type (error)|applicaction/json|
 |14|Response (error)|{"error": "Error al Buscar el Registro"}|
 |15|cURL|curl -X GET http://localhost:8000/v1/contactos/3|
+
+3. Crear un nuevo contacto
+
+|No.|Propiedad|Detalle|
+|:-:|:------:|:------:|
+|1|Descripción|Endpoint para crear un nuevo contacto en la agenda|
+|2|Summary|Inserta un registro en la tabla contactos|
+|3|Method|POST|
+|4|Endpoint|/v1/contactos|
+|5|Authentication|NA|
+|6|Query Param|NA|
+|7|Path Param|NA|
+|8|Data|Body (JSON): {"nombre": str, "telefono": str, "email": str}|
+|9|Status Code|201|
+|10|Response|{"id_contacto": int, "nombre": str, "telefono": str, "email": str, "message": "Contacto creado correctamente"}|
+|11|Response Type|application/json|
+|12|Reglas de validación|Todos los campos son obligatorios y no pueden venir vacíos ni solo con espacios. Ningún campo puede tener el valor "string" (sin importar mayúsculas/minúsculas).|
+|13|Status Code (error)|400, 500|
+|14|Response (error) 400|{"detail": "Error: Datos en [campos_vacios] no introducidos"}, {"detail": "Error: palabra string escrita en [campos_string]"}, o combinación: {"detail": "Error: Datos en [campos_vacios] no introducidos y palabra string escrita en [campos_string]"}|
+|15|Response (error) 500|{"detail": "Error al insertar el contacto en la base de datos"}|
+|16|Ejemplo Body|{"nombre": "Juan Pérez", "telefono": "5551234567", "email": "juan.perez@example.com"}|
+|17|cURL|curl -X POST http://127.0.0.1:8000/v1/contactos -H "Content-Type: application/json" -d '{"nombre": "Juan Pérez", "telefono": "5551234567", "email": "juan.perez@example.com"}'|
