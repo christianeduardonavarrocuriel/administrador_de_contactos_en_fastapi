@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi import HTTPException
+from fastapi import Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import sqlite3 as sqlite
+from typing import Optional
+from datetime import datetime
 
 app = FastAPI()
 
@@ -19,7 +22,7 @@ class ContactoIn(BaseModel):
 def get_root():
     response = {
         "message": "API de la agenda",
-        "datatime": "12/02/2026"
+        "datatime": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
         }
     return response
 
@@ -32,11 +35,57 @@ def get_root():
     limit:int -> Indica el número de registros a regresar
     skip:int -> Indica el número de registros a omitir"""
 )
-async def get_contactos(limit: int = 10, skip: int = 0):
+async def get_contactos(
+    limit: Optional[int] = Query(default=None),
+    skip: Optional[int] = Query(default=None),
+):
   #  TODO: Conectar con la base de datos agenda.db
   #  TODO: Consultar los registros de la tabla contactos
   #  TODO: Formatear la respuesta con el siguiente schema:
   #  TODO: Responder la petición
+
+    # Validación de parámetros vacíos
+    if limit is None and skip is None:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Error: los parámetros limit y skip son obligatorios",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
+    if limit is None:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Error: el parámetro limit es obligatorio",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
+    if skip is None:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Error: el parámetro skip es obligatorio",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
 
     # Validación de parámetros: limit y skip no pueden ser negativos
     if limit < 0 and skip < 0:
@@ -46,7 +95,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                 "table": "contactos",
                 "items": [],
                 "count": 0,
-                "datetime": "12/02/2026 10:28:30",
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error: los parámetros limit y skip no pueden ser negativos",
                 "limit": limit,
                 "skip": skip,
@@ -60,7 +109,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                 "table": "contactos",
                 "items": [],
                 "count": 0,
-                "datetime": "12/02/2026 10:28:30",
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error: el parámetro limit no puede ser negativo",
                 "limit": limit,
                 "skip": skip,
@@ -74,7 +123,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                 "table": "contactos",
                 "items": [],
                 "count": 0,
-                "datetime": "12/02/2026 10:28:30",
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error: el parámetro skip no puede ser negativo",
                 "limit": limit,
                 "skip": skip,
@@ -96,7 +145,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                     "table": "contactos",
                     "items": [],
                     "count": 0,
-                    "datetime": "12/02/2026 10:28:30",
+                    "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     "message": "Error: el parámetro limit excede el número de registros disponibles",
                     "limit": limit,
                     "skip": skip,
@@ -119,7 +168,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
             "table": "contactos",
             "items": items,
             "count": len(items),
-            "datetime": "12/02/2026 10:28:30",
+            "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "message": "Datos consultados exitosamente",
             "limit": limit,
             "skip": skip,
@@ -137,7 +186,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                 "table": "contactos",
                 "items": [],
                 "count": 0,
-                "datetime": "12/02/2026 10:28:30",
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error al consultar los datos",
                 "limit":limit,
                 "skip":skip
@@ -160,7 +209,7 @@ async def get_contacto_por_id(id_contacto: int):
                 "table": "contactos",
                 "item": {},
                 "count": 0,
-                "datetime": "12/02/2026 10:28:30",
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error: No puedes ingresas un número negativo en id_contacto",
             },
         )
@@ -182,7 +231,7 @@ async def get_contacto_por_id(id_contacto: int):
                     "table": "contactos",
                     "item": {},
                     "count": 0,
-                    "datetime": "12/02/2026 10:28:30",
+                    "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                     "message": "Contacto no encontrado",
                 },
             )
@@ -197,7 +246,7 @@ async def get_contacto_por_id(id_contacto: int):
         data = {
             "table": "contactos",
             "items": item,
-            "datetime": "12/02/2026 10:28:30",
+            "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
             "message": "Datos consultados exitosamente",
         }
         return JSONResponse(status_code=202, content=data)
@@ -209,7 +258,7 @@ async def get_contacto_por_id(id_contacto: int):
                 "table": "contactos",
                 "item": {},
                 "count": 0,
-                "datetime": "12/02/2026 10:28:30",
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error al Buscar el Registro",
             },
         )
