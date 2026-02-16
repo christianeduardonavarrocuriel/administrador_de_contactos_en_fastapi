@@ -1,9 +1,16 @@
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 import sqlite3 as sqlite
 
 app = FastAPI()
+
+
+class ContactoIn(BaseModel):
+    nombre: str
+    telefono: str
+    email: str
 
 @app.get("/",
  status_code=202,
@@ -34,7 +41,7 @@ async def get_contactos(limit: int = 10, skip: int = 0):
     try:
         db = sqlite.connect("agenda.db")
         cursor = db.cursor()
-        cursor.execute("SELECT * FROM contactoss LIMIT ? OFFSET ?", (limit, skip))
+        cursor.execute("SELECT * FROM contactos LIMIT ? OFFSET ?", (limit, skip))
         contactos = cursor.fetchall()
         print(contactos)
 
@@ -79,3 +86,82 @@ async def get_contactos(limit: int = 10, skip: int = 0):
                 "skip":skip
                 }
             )
+
+
+@app.post(
+    "/v1/contactos",
+    status_code=201,
+    summary="Crear un nuevo contacto",
+    description="Inserta un nuevo contacto en la tabla contactos de la agenda",
+)
+async def create_contacto(contacto: ContactoIn):
+    # Validación de campos vacíos o solo espacios
+    campos_vacios = []
+    if not contacto.nombre.strip():
+        campos_vacios.append("nombre")
+    if not contacto.telefono.strip():
+        campos_vacios.append("telefono")
+    if not contacto.email.strip():
+        campos_vacios.append("email")
+
+    # Validación de valores por defecto "string"
+    campos_string = []
+    if contacto.nombre.strip().lower() == "string":
+        campos_string.append("nombre")
+    if contacto.telefono.strip().lower() == "string":
+        campos_string.append("telefono")
+    if contacto.email.strip().lower() == "string":
+        campos_string.append("email")
+
+    # Construir mensaje según los casos presentes
+    if campos_vacios or campos_string:
+        partes_mensaje = []
+        if campos_vacios:
+            partes_mensaje.append(
+                f"Datos en {', '.join(campos_vacios)} no introducidos"
+            )
+        if campos_string:
+            partes_mensaje.append(
+                f"palabra string escrita en {', '.join(campos_string)}"
+            )
+
+        detalle = "Error: " + " y ".join(partes_mensaje)
+        raise HTTPException(
+            status_code=400,
+            detail=detalle,
+        )
+
+    try:
+        db = sqlite.connect("agenda.db")
+        cursor = db.cursor()
+        cursor.execute(
+            "INSERT INTO contactos (nombre, telefono, email) VALUES (?, ?, ?)",
+            (contacto.nombre, contacto.telefono, contacto.email),
+        )
+        db.commit()
+        new_id = cursor.lastrowid
+
+        data = {
+            "id_contacto": new_id,
+            "nombre": contacto.nombre,
+            "telefono": contacto.telefono,
+            "email": contacto.email,
+            "message": "Contacto creado correctamente",
+        }
+        return JSONResponse(status_code=201, content=data)
+    except sqlite.IntegrityError:
+        # Por ejemplo, si el teléfono ya existe (campo UNIQUE)
+        raise HTTPException(
+            status_code=400,
+            detail="Ya existe un contacto con ese teléfono",
+        )
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Error al insertar el contacto en la base de datos",
+        )
+    finally:
+        try:
+            db.close()
+        except Exception:
+            pass
