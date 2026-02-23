@@ -1,3 +1,11 @@
+"""API de contactos con FastAPI.
+
+Este módulo expone una API REST para gestionar una agenda de contactos
+almacenados en una base de datos SQLite (`agenda.db`). Incluye endpoints
+para consultar contactos con paginación, obtener un contacto por ID y
+crear nuevos registros con validaciones.
+"""
+
 from fastapi import FastAPI
 from fastapi import HTTPException
 from fastapi import Query
@@ -20,6 +28,10 @@ class ContactoIn(BaseModel):
  summary="Endpoint raíz",
  description= "Bienvenido a la API de agenda")
 def get_root():
+    """Endpoint raíz de la API de contactos.
+
+    Devuelve un mensaje de bienvenida y la fecha/hora actual formateada.
+    """
     response = {
         "message": "API de la agenda",
         "datatime": datetime.now().strftime("%d/%m/%Y %H:%M:%S")
@@ -39,10 +51,14 @@ async def get_contactos(
     limit: Optional[int] = Query(default=None),
     skip: Optional[int] = Query(default=None),
 ):
-  #  TODO: Conectar con la base de datos agenda.db
-  #  TODO: Consultar los registros de la tabla contactos
-  #  TODO: Formatear la respuesta con el siguiente schema:
-  #  TODO: Responder la petición
+    """Obtiene contactos paginados desde la base de datos.
+
+    - `limit`: número máximo de registros a devolver.
+    - `skip`: número de registros a omitir desde el inicio.
+
+    Aplica validaciones sobre los parámetros y devuelve mensajes de error
+    claros cuando los valores son inválidos.
+    """
 
     # Validación de parámetros vacíos
     if limit is None and skip is None:
@@ -201,6 +217,11 @@ async def get_contactos(
     description="Busca un contacto específico en la tabla contactos usando id_contacto",
 )
 async def get_contacto_por_id(id_contacto: int):
+    """Obtiene un contacto específico por su identificador.
+
+    Si `id_contacto` es negativo o el registro no existe, devuelve una
+    respuesta JSON con el mensaje de error correspondiente.
+    """
     # Validación: id_contacto no puede ser negativo
     if id_contacto < 0:
         return JSONResponse(
@@ -276,6 +297,13 @@ async def get_contacto_por_id(id_contacto: int):
     description="Inserta un nuevo contacto en la tabla contactos de la agenda",
 )
 async def create_contacto(contacto: ContactoIn):
+    """Crea un nuevo contacto en la agenda.
+
+    Valida que los campos no vengan vacíos, que no contengan solo
+    espacios y que no utilicen el valor por defecto "string". También
+    maneja errores de integridad (teléfono duplicado) y errores
+    generales de base de datos.
+    """
     # Validación de campos vacíos o solo espacios
     campos_vacios = []
     if not contacto.nombre.strip():
