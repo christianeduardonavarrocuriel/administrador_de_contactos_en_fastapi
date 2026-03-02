@@ -48,8 +48,8 @@ def get_root():
     skip:int -> Indica el número de registros a omitir"""
 )
 async def get_contactos(
-    limit: Optional[int] = Query(default=None),
-    skip: Optional[int] = Query(default=None),
+    limit: Optional[str] = Query(default=None),
+    skip: Optional[str] = Query(default=None),
 ):
     """Obtiene contactos paginados desde la base de datos.
 
@@ -59,6 +59,68 @@ async def get_contactos(
     Aplica validaciones sobre los parámetros y devuelve mensajes de error
     claros cuando los valores son inválidos.
     """
+
+    # Validación si limit o skip tienen caracteres
+    limit_error = False
+    skip_error = False
+
+    try:
+        if limit is not None:
+            int(limit)
+    except ValueError:
+        limit_error = True
+
+    try:
+        if skip is not None:
+            int(skip)
+    except ValueError:
+        skip_error = True
+
+    if limit_error and skip_error:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Error: los parámetros limit y skip no deben tener caracteres",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+    elif limit_error:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Error: el parámetro limit no debe tener caracteres",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+    elif skip_error:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Error: el parámetro skip no debe tener caracteres",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
+    # Conversión a enteros
+    if limit is not None:
+        limit = int(limit)
+    if skip is not None:
+        skip = int(skip)
 
     # Validación de parámetros vacíos
     if limit is None and skip is None:
@@ -141,6 +203,20 @@ async def get_contactos(
                 "count": 0,
                 "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
                 "message": "Error: el parámetro skip no puede ser negativo",
+                "limit": limit,
+                "skip": skip,
+            },
+        )
+
+    if limit == 0:
+        return JSONResponse(
+            status_code=200,
+            content={
+                "table": "contactos",
+                "items": [],
+                "count": 0,
+                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
+                "message": "Se obtuvieron 0 registros",
                 "limit": limit,
                 "skip": skip,
             },
