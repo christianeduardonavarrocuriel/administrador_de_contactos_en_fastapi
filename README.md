@@ -1,6 +1,6 @@
 # apis_demo
 
-## Descripción
+## Descripción:
 
 Este proyecto es una **API REST de agenda de contactos** construida con **Python**, **FastAPI** y **SQLite**. Expone endpoints para consultar contactos (con paginación), obtener un contacto por ID y crear nuevos registros con validaciones, enfocándose en buenas prácticas de diseño de APIs y acceso a base de datos.
 
