@@ -119,54 +119,9 @@ async def get_contactos(
             },
         )
 
-    # Conversión a enteros
-    if limit is not None:
-        limit = int(limit)
-    if skip is not None:
-        skip = int(skip)
-
-    # Validación de parámetros vacíos
-    if limit is None and skip is None:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "table": "contactos",
-                "items": [],
-                "count": 0,
-                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                "message": "Error: los parámetros limit y skip son obligatorios",
-                "limit": limit,
-                "skip": skip,
-            },
-        )
-
-    if limit is None:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "table": "contactos",
-                "items": [],
-                "count": 0,
-                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                "message": "Error: el parámetro limit es obligatorio",
-                "limit": limit,
-                "skip": skip,
-            },
-        )
-
-    if skip is None:
-        return JSONResponse(
-            status_code=400,
-            content={
-                "table": "contactos",
-                "items": [],
-                "count": 0,
-                "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                "message": "Error: el parámetro skip es obligatorio",
-                "limit": limit,
-                "skip": skip,
-            },
-        )
+    # Conversión a enteros y valores por defecto
+    limit = int(limit) if limit is not None else 10
+    skip = int(skip) if skip is not None else 0
 
     # Validación de parámetros: limit y skip no pueden ser negativos
     if limit < 0 and skip < 0:
@@ -213,7 +168,7 @@ async def get_contactos(
 
     if limit == 0:
         return JSONResponse(
-            status_code=200,
+            status_code=202,
             content={
                 "table": "contactos",
                 "items": [],
@@ -228,24 +183,6 @@ async def get_contactos(
     try:
         db = sqlite.connect("agenda.db")
         cursor = db.cursor()
-
-        # Validar que el rango de limit no exceda el total de registros
-        cursor.execute("SELECT COUNT(*) FROM contactos")
-        total_registros = cursor.fetchone()[0]
-
-        if limit > total_registros and total_registros > 0:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "table": "contactos",
-                    "items": [],
-                    "count": 0,
-                    "datetime": datetime.now().strftime("%d/%m/%Y %H:%M:%S"),
-                    "message": "Error: el parámetro limit excede el número de registros disponibles",
-                    "limit": limit,
-                    "skip": skip,
-                },
-            )
 
         cursor.execute("SELECT * FROM contactos LIMIT ? OFFSET ?", (limit, skip))
         contactos = cursor.fetchall()

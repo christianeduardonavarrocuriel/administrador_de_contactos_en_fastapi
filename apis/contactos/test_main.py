@@ -60,8 +60,7 @@ def test_get_contactos_limit_10_skip_negativo():
 def test_get_contactos_limit_0_skip_0():
     url = f"{URL_BASE}/v1/contactos?limit=0&skip=0"
     response = requests.get(url)
-    # La implementación devuelve 200 cuando limit == 0
-    assert response.status_code == 200
+    assert response.status_code == 202
     assert "Se obtuvieron 0 registros" in response.json()["message"]
 
 
@@ -69,27 +68,39 @@ def test_get_contactos_limit_0_skip_0():
 def test_get_contactos_skip_0():
     url = f"{URL_BASE}/v1/contactos?skip=0"
     response = requests.get(url)
-    # En la implementación actual, falta limit -> error 400
-    assert response.status_code == 400
-    assert "limit es obligatorio" in response.json()["message"]
+    assert response.status_code == 202
+    data = response.json()
+    assert isinstance(data["items"], list)
+    assert data["limit"] == 10
+    assert data["skip"] == 0
+    assert data["count"] == 10
+    assert len(data["items"]) == 10
 
 
 # TODO: 7. GET 202 /v1/contactos?limit=10 Regresar los primeros 10 contactos por default
 def test_get_contactos_limit_10():
     url = f"{URL_BASE}/v1/contactos?limit=10"
     response = requests.get(url)
-    # En la implementación actual, falta skip -> error 400
-    assert response.status_code == 400
-    assert "skip es obligatorio" in response.json()["message"]
+    assert response.status_code == 202
+    data = response.json()
+    assert isinstance(data["items"], list)
+    assert data["limit"] == 10
+    assert data["skip"] == 0
+    assert data["count"] == 10
+    assert len(data["items"]) == 10
 
 
 # TODO: 8. GET 202 /v1/contactos Regresar los primeros 10 contactos por default
 def test_get_contactos():
     url = f"{URL_BASE}/v1/contactos"
     response = requests.get(url)
-    # En la implementación actual, ambos parámetros son obligatorios
-    assert response.status_code == 400
-    assert "obligatorios" in response.json()["message"]
+    assert response.status_code == 202
+    data = response.json()
+    assert isinstance(data["items"], list)
+    assert data["limit"] == 10
+    assert data["skip"] == 0
+    assert data["count"] == 10
+    assert len(data["items"]) == 10
 
 
 # TODO: 9. GET 400 /v1/contactos?limit=x&skip=100 Mensaje de Error en limit
