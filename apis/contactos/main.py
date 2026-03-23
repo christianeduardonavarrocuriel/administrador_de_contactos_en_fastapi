@@ -14,6 +14,9 @@ from pydantic import BaseModel
 import sqlite3 as sqlite
 from typing import Optional
 from datetime import datetime
+import os
+
+import uvicorn
 
 app = FastAPI()
 
@@ -364,6 +367,11 @@ async def get_contacto_por_id(id_contacto: int):
             db.close()
         except Exception:
             pass
+
+
+if __name__ == "__main__":
+    port = int(os.getenv("PORT", "8000"))
+    uvicorn.run(app, host="0.0.0.0", port=port)
 
 
 @app.post(
