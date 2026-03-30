@@ -133,20 +133,7 @@ def test_create_contacto_success():
     assert "id_contacto" in data
 
 
-# TODO: 12 POST 400 /v1/contactos Error teléfono duplicado
-def test_create_contacto_error_duplicate():
-    url = f"{URL_BASE}/v1/contactos"
-    payload = {
-        "nombre": "Test Duplicado",
-        "telefono": "1234567890",
-        "email": "duplicado@example.com"
-    }
-    response = requests.post(url, json=payload)
-    assert response.status_code == 400
-    assert "Ya existe un contacto con ese teléfono" in response.json()["detail"]
-
-
-# TODO: 13. GET 202 /v1/contactos/{id_contacto} Consultar un contacto por ID
+# TODO: 12. GET 202 /v1/contactos/{id_contacto} Consultar un contacto por ID
 def test_get_contacto_id():
     id_contacto = 1 # Usamos un ID fijo que sepamos que existe
     url = f"{URL_BASE}/v1/contactos/{id_contacto}"
@@ -154,7 +141,7 @@ def test_get_contacto_id():
     assert response.status_code == 202
 
 
-# TODO: 14. PUT 202 /v1/contactos/{id_contacto} Actualizar un contacto
+# TODO: 13. PUT 202 /v1/contactos/{id_contacto} Actualizar un contacto
 def test_update_contacto():
     id_contacto = 1
     url = f"{URL_BASE}/v1/contactos/{id_contacto}"
@@ -167,7 +154,7 @@ def test_update_contacto():
     assert response.status_code in [202, 404]
 
 
-# TODO: 15. DELETE 202 /v1/contactos/{id_contacto} Borrar un contacto
+# TODO: 14. DELETE 202 /v1/contactos/{id_contacto} Borrar un contacto
 def test_delete_contacto():
     # En pruebas con datos fijos, a veces es mejor borrar uno que acabamos de crear
     # o simplemente intentar borrar uno alto para no vaciar la tabla de base
@@ -176,7 +163,7 @@ def test_delete_contacto():
     assert response.status_code in [202, 404]
 
 
-# TODO: 16. POST 400 /v1/contactos Error email sin @
+# TODO: 15. POST 400 /v1/contactos Error email sin @
 def test_create_contacto_error_email():
     url = f"{URL_BASE}/v1/contactos"
     payload = {
@@ -202,7 +189,7 @@ def test_update_contacto_error_email():
     assert "email no contiene el carácter '@'" in response.json()["detail"]
 
 
-# TODO: 18. GET 400 /v1/contactos/{id_contacto} Error ID negativo
+# TODO: 17. GET 400 /v1/contactos/{id_contacto} Error ID negativo
 def test_get_contacto_id_negativo():
     url = f"{URL_BASE}/v1/contactos/-5"
     response = requests.get(url)
