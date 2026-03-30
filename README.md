@@ -68,6 +68,8 @@ Los endpoints principales del módulo de contactos son:
 - `GET /v1/contactos` — Consultar todos los contactos (paginados con `limit` y `skip`).
 - `GET /v1/contactos/{id_contacto}` — Consultar un contacto específico por ID.
 - `POST /v1/contactos` — Crear un nuevo contacto.
+- `PUT /v1/contactos/{id_contacto}` — Actualizar un contacto existente por ID.
+- `DELETE /v1/contactos/{id_contacto}` — Eliminar un contacto por ID.
 
 La especificación detallada de cada endpoint (campos, códigos de respuesta, ejemplos de errores, etc.) se encuentra en las tablas de las secciones posteriores de este README.
 
@@ -140,7 +142,45 @@ La especificación detallada de cada endpoint (campos, códigos de respuesta, ej
 |15|Response (error) 500|{"detail": "Error al insertar el contacto en la base de datos"}|
 |16|Ejemplo Body|{"nombre": "Juan Pérez", "telefono": "5551234567", "email": "juan.perez@example.com"}|
 |17|cURL|curl -X POST http://127.0.0.1:8000/v1/contactos -H "Content-Type: application/json" -d '{"nombre": "Juan Pérez", "telefono": "5551234567", "email": "juan.perez@example.com"}'|
+4. Actualizar un contacto existente
 
+|No.|Propiedad|Detalle|
+|:-:|:------:|:------:|
+|1|Descripción|Endpoint para modificar los datos de un contacto existente.|
+|2|Summary|Actualiza un registro en la tabla contactos basado en su id.|
+|3|Method|PUT|
+|4|Endpoint|/v1/contactos/{id_contacto}|
+|5|Authentication|NA|
+|6|Query Param|NA|
+|7|Path Param|id_contacto:int|
+|8|Data|Body (JSON): {"nombre": str, "telefono": str, "email": str}|
+|9|Status Code|202|
+|10|Response|{"id_contacto": int, "nombre": str, "telefono": str, "email": str, "message": "Contacto actualizado correctamente"}|
+|11|Response Type|application/json|
+|12|Status Code (error)|400, 404, 500|
+|13|Response Type (error)|application/json|
+|14|Response (error)|{"detail": "Contacto no encontrado"} / {"detail": "Error al actualizar el contacto"}|
+|15|cURL|curl -X PUT http://127.0.0.1:8000/v1/contactos/3 -H "Content-Type: application/json" -d '{"nombre": "Juan Modificado", "telefono": "5550001122", "email": "juan.mod@example.com"}'|
+
+5. Borrar un contacto
+
+|No.|Propiedad|Detalle|
+|:-:|:------:|:------:|
+|1|Descripción|Endpoint para eliminar un contacto de la agenda.|
+|2|Summary|Borra un registro de la tabla contactos basado en su id.|
+|3|Method|DELETE|
+|4|Endpoint|/v1/contactos/{id_contacto}|
+|5|Authentication|NA|
+|6|Query Param|NA|
+|7|Path Param|id_contacto:int|
+|8|Data|NA|
+|9|Status Code|202|
+|10|Response|{"message": "Contacto eliminado correctamente"}|
+|11|Response Type|application/json|
+|12|Status Code (error)|400, 404, 500|
+|13|Response Type (error)|application/json|
+|14|Response (error)|{"detail": "Contacto no encontrado"} / {"detail": "Error al eliminar el contacto"}|
+|15|cURL|curl -X DELETE http://127.0.0.1:8000/v1/contactos/3|
 # API Contactos
 
 API REST para la gestión de una agenda de contactos, construida con **FastAPI** y **SQLite**.
@@ -309,6 +349,57 @@ Ejemplo de respuesta exitosa:
 
 ---
 
+## `[PUT]` — PUT /v1/contactos/{id_contacto} — Actualizar un Contacto
+
+Esta sección hace referencia a la tabla **"4. Actualizar un contacto existente"** al inicio del documento.
+
+- Endpoint: `PUT /v1/contactos/{id_contacto}`
+- Descripción: Actualizar un contacto en la agenda.
+- Ver reglas de validación en la sección `[VALIDACIONES]` (PUT /v1/contactos).
+- Ver catálogo completo de errores en la sección `[ERRORES]` (PUT /v1/contactos — 400 / 404 / 500).
+
+Ejemplo de body de petición:
+
+```json
+{
+    "nombre": "Juan Modificado",
+    "telefono": "5550001122",
+    "email": "juan.mod@example.com"
+}
+```
+
+Ejemplo de respuesta exitosa:
+
+```json
+{
+    "id_contacto": 3,
+    "nombre": "Juan Modificado",
+    "telefono": "5550001122",
+    "email": "juan.mod@example.com",
+    "message": "Contacto actualizado correctamente"
+}
+```
+
+---
+
+## `[DELETE]` — DELETE /v1/contactos/{id_contacto} — Eliminar un Contacto
+
+Esta sección hace referencia a la tabla **"5. Borrar un contacto"** al inicio del documento.
+
+- Endpoint: `DELETE /v1/contactos/{id_contacto}`
+- Descripción: Eliminar un contacto de la agenda.
+- Ver registros de error en la sección `[ERRORES]` (DELETE /v1/contactos — 404 / 500).
+
+Ejemplo de respuesta exitosa:
+
+```json
+{
+    "message": "Contacto eliminado correctamente"
+}
+```
+
+---
+
 ## `[VALIDACIONES]` — Reglas de Validación por Endpoint
 
 ### GET /v1/contactos — Paginación
@@ -336,7 +427,25 @@ Ejemplo de respuesta exitosa:
 |:---------:|:----------------:|
 | Campo vacío o solo espacios | `"Error: Datos en [campo] no introducidos"` |
 | Campo con valor `"string"` | `"Error: palabra string escrita en [campo]"` |
+| Email sin `@` | `"Error: email no contiene el carácter '@'"` |
 | Teléfono duplicado (UNIQUE) | `"Ya existe un contacto con ese teléfono"` |
+
+### PUT /v1/contactos/{id_contacto}
+
+| Condición | Mensaje de Error |
+|:---------:|:----------------:|
+| `id_contacto < 0` | `"Error: No puedes ingresas un número negativo en id_contacto"` |
+| Registro no encontrado | `"Contacto no encontrado"` |
+| Campo vacío o solo espacios | `"Error: Datos en [campo] no introducidos"` |
+| Campo con valor `"string"` | `"Error: palabra string escrita en [campo]"` |
+| Email sin `@` | `"Error: email no contiene el carácter '@'"` |
+
+### DELETE /v1/contactos/{id_contacto}
+
+| Condición | Mensaje de Error |
+|:---------:|:----------------:|
+| `id_contacto < 0` | `"Error: No puedes ingresas un número negativo en id_contacto"` |
+| Registro no encontrado | `"Contacto no encontrado"` |
 
 ---
 

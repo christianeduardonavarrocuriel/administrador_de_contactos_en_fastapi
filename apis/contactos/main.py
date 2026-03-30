@@ -306,6 +306,132 @@ async def get_contacto_por_id(id_contacto: int):
             pass
 
 
+@app.put(
+    "/v1/contactos/{id_contacto}",
+    status_code=202,
+    summary="Actualizar un contacto existente",
+    description="Actualiza los datos de un contacto en la tabla contactos basado en su id_contacto",
+)
+async def update_contacto(id_contacto: int, contacto: ContactoIn):
+    """Actualiza un contacto existente en la agenda.
+
+    Valida que el ID no sea negativo, que el contacto exista y que los 
+    datos nuevos sean válidos.
+    """
+    if id_contacto < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Error: No puedes ingresas un número negativo en id_contacto",
+        )
+
+    # Reutilizar lógica de validación de campos
+    campos_vacios = []
+    if not contacto.nombre.strip():
+        campos_vacios.append("nombre")
+    if not contacto.telefono.strip():
+        campos_vacios.append("telefono")
+    if not contacto.email.strip():
+        campos_vacios.append("email")
+
+    campos_string = []
+    if contacto.nombre.strip().lower() == "string":
+        campos_string.append("nombre")
+    if contacto.telefono.strip().lower() == "string":
+        campos_string.append("telefono")
+    if contacto.email.strip().lower() == "string":
+        campos_string.append("email")
+
+    # Validación de formato de email (mínimo un @)
+    error_email = False
+    if "@" not in contacto.email:
+        error_email = True
+
+    if campos_vacios or campos_string or error_email:
+        partes_mensaje = []
+        if campos_vacios:
+            partes_mensaje.append(f"Datos en {', '.join(campos_vacios)} no introducidos")
+        if campos_string:
+            partes_mensaje.append(f"palabra string escrita en {', '.join(campos_string)}")
+        if error_email:
+            partes_mensaje.append("email no contiene el carácter '@'")
+        detalle = "Error: " + " y ".join(partes_mensaje)
+        raise HTTPException(status_code=400, detail=detalle)
+
+    try:
+        db = sqlite.connect("agenda.db")
+        cursor = db.cursor()
+        
+        # Verificar existencia
+        cursor.execute("SELECT id_contacto FROM contactos WHERE id_contacto = ?", (id_contacto,))
+        if cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Contacto no encontrado")
+
+        cursor.execute(
+            "UPDATE contactos SET nombre = ?, telefono = ?, email = ? WHERE id_contacto = ?",
+            (contacto.nombre, contacto.telefono, contacto.email, id_contacto),
+        )
+        db.commit()
+
+        data = {
+            "id_contacto": id_contacto,
+            "nombre": contacto.nombre,
+            "telefono": contacto.telefono,
+            "email": contacto.email,
+            "message": "Contacto actualizado correctamente",
+        }
+        return JSONResponse(status_code=202, content=data)
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Error al actualizar el contacto en la base de datos",
+        )
+    finally:
+        db.close()
+
+
+@app.delete(
+    "/v1/contactos/{id_contacto}",
+    status_code=202,
+    summary="Borrar un contacto",
+    description="Elimina un registro de la tabla contactos basado en su id_contacto",
+)
+async def delete_contacto(id_contacto: int):
+    """Elimina un contacto de la agenda."""
+    if id_contacto < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Error: No puedes ingresas un número negativo en id_contacto",
+        )
+
+    try:
+        db = sqlite.connect("agenda.db")
+        cursor = db.cursor()
+        
+        # Verificar existencia
+        cursor.execute("SELECT id_contacto FROM contactos WHERE id_contacto = ?", (id_contacto,))
+        if cursor.fetchone() is None:
+            raise HTTPException(status_code=404, detail="Contacto no encontrado")
+
+        cursor.execute("DELETE FROM contactos WHERE id_contacto = ?", (id_contacto,))
+        db.commit()
+
+        return JSONResponse(
+            status_code=202,
+            content={"message": "Contacto eliminado correctamente"}
+        )
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Error al eliminar el contacto en la base de datos",
+        )
+    finally:
+        db.close()
+
+
 if __name__ == "__main__":
     port = int(os.getenv("PORT", "8000"))
     uvicorn.run(app, host="0.0.0.0", port=port)
@@ -343,8 +469,13 @@ async def create_contacto(contacto: ContactoIn):
     if contacto.email.strip().lower() == "string":
         campos_string.append("email")
 
+    # Validación de formato de email (mínimo un @)
+    error_email = False
+    if "@" not in contacto.email:
+        error_email = True
+
     # Construir mensaje según los casos presentes
-    if campos_vacios or campos_string:
+    if campos_vacios or campos_string or error_email:
         partes_mensaje = []
         if campos_vacios:
             partes_mensaje.append(
@@ -354,6 +485,8 @@ async def create_contacto(contacto: ContactoIn):
             partes_mensaje.append(
                 f"palabra string escrita en {', '.join(campos_string)}"
             )
+        if error_email:
+            partes_mensaje.append("email no contiene el carácter '@'")
 
         detalle = "Error: " + " y ".join(partes_mensaje)
         raise HTTPException(

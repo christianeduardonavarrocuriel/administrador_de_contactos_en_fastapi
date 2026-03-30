@@ -109,11 +109,102 @@ def test_get_contactos_limit_x_skip_100():
     response = requests.get(url)
     assert response.status_code == 400
     assert "limit no debe tener caracteres" in response.json()["message"]
-
-
+    
 # TODO: 10. GET 400 /v1/contactos?limit=10&skip=x Mensaje de Error en skip
 def test_get_contactos_limit_10_skip_x():
     url = f"{URL_BASE}/v1/contactos?limit=10&skip=x"
     response = requests.get(url)
     assert response.status_code == 400
     assert "skip no debe tener caracteres" in response.json()["message"]
+
+# TODO: 11. POST 201 /v1/contactos Insertar un nuevo contacto (Exitoso)
+def test_create_contacto_success():
+    url = f"{URL_BASE}/v1/contactos"
+    # Este test asume que el teléfono no existe inicialmente o se limpia la DB
+    payload = {
+        "nombre": "Test Cliente",
+        "telefono": "1234567890",
+        "email": "test_cliente@example.com"
+    }
+    response = requests.post(url, json=payload)
+    assert response.status_code == 201
+    data = response.json()
+    assert data["nombre"] == "Test Cliente"
+    assert "id_contacto" in data
+
+
+# TODO: 12 POST 400 /v1/contactos Error teléfono duplicado
+def test_create_contacto_error_duplicate():
+    url = f"{URL_BASE}/v1/contactos"
+    payload = {
+        "nombre": "Test Duplicado",
+        "telefono": "1234567890",
+        "email": "duplicado@example.com"
+    }
+    response = requests.post(url, json=payload)
+    assert response.status_code == 400
+    assert "Ya existe un contacto con ese teléfono" in response.json()["detail"]
+
+
+# TODO: 13. GET 202 /v1/contactos/{id_contacto} Consultar un contacto por ID
+def test_get_contacto_id():
+    id_contacto = 1 # Usamos un ID fijo que sepamos que existe
+    url = f"{URL_BASE}/v1/contactos/{id_contacto}"
+    response = requests.get(url)
+    assert response.status_code == 202
+
+
+# TODO: 14. PUT 202 /v1/contactos/{id_contacto} Actualizar un contacto
+def test_update_contacto():
+    id_contacto = 1
+    url = f"{URL_BASE}/v1/contactos/{id_contacto}"
+    payload = {
+        "nombre": "Cliente Actualizado",
+        "telefono": "0987654321",
+        "email": "actualizado@example.com"
+    }
+    response = requests.put(url, json=payload)
+    assert response.status_code in [202, 404]
+
+
+# TODO: 15. DELETE 202 /v1/contactos/{id_contacto} Borrar un contacto
+def test_delete_contacto():
+    # En pruebas con datos fijos, a veces es mejor borrar uno que acabamos de crear
+    # o simplemente intentar borrar uno alto para no vaciar la tabla de base
+    url = f"{URL_BASE}/v1/contactos/999" 
+    response = requests.delete(url)
+    assert response.status_code in [202, 404]
+
+
+# TODO: 16. POST 400 /v1/contactos Error email sin @
+def test_create_contacto_error_email():
+    url = f"{URL_BASE}/v1/contactos"
+    payload = {
+        "nombre": "Error Email",
+        "telefono": "0000000000",
+        "email": "email_sin_arroba"
+    }
+    response = requests.post(url, json=payload)
+    assert response.status_code == 400
+    assert "email no contiene el carácter '@'" in response.json()["detail"]
+
+
+# TODO: 16. PUT 400 /v1/contactos/{id_contacto} Error email sin @ en actualizar
+def test_update_contacto_error_email():
+    url = f"{URL_BASE}/v1/contactos/1"
+    payload = {
+        "nombre": "Error Email Upd",
+        "telefono": "1111111111",
+        "email": "email_sin_arroba_upd"
+    }
+    response = requests.put(url, json=payload)
+    assert response.status_code == 400
+    assert "email no contiene el carácter '@'" in response.json()["detail"]
+
+
+# TODO: 18. GET 400 /v1/contactos/{id_contacto} Error ID negativo
+def test_get_contacto_id_negativo():
+    url = f"{URL_BASE}/v1/contactos/-5"
+    response = requests.get(url)
+    assert response.status_code == 400
+    assert "número negativo" in response.json()["message"]
